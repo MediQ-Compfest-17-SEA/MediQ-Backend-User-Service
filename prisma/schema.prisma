@@ -1,0 +1,30 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Definisikan ENUM untuk peran pengguna
+enum Role {
+  PASIEN
+  OPERATOR
+  ADMIN_FASKES
+}
+
+// Definisikan model untuk tabel User
+model User {
+  id        String   @id @default(uuid()) // Menggunakan UUID untuk ID unik
+  nik       String   @unique // NIK harus unik
+  name      String
+  email     String   @unique // Email juga harus unik
+  password  String
+  role      Role     @default(PASIEN) // Peran default adalah PASIEN
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
