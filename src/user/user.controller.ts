@@ -1,7 +1,10 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Request, Patch } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
 import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
+import { Role } from '@prisma/client';
 
 @Controller('user')
 export class UserController {
@@ -21,5 +24,19 @@ export class UserController {
   @Get('profile')
   getProfile(@Request() req) {
     return req.user;
+  }
+
+  @Get()
+  @Roles(Role.ADMIN_FASKES)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  findAll() {
+    return this.userService.findAll();
+  }
+
+  @Patch(':id/role')
+  @Roles(Role.ADMIN_FASKES)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  delete(@Param('id') id: string) {
+    return this.userService.delete(id);
   }
 }
