@@ -53,7 +53,10 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with NIK ${nik} not found.`);
     }
-
     return user;
+  }
+
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email }});
   }
 }

@@ -19,12 +19,13 @@ enum Role {
 
 // Definisikan model untuk tabel User
 model User {
-  id        String   @id @default(uuid()) // Menggunakan UUID untuk ID unik
-  nik       String   @unique // NIK harus unik
-  name      String
-  email     String   @unique // Email juga harus unik
-  password  String
-  role      Role     @default(PASIEN) // Peran default adalah PASIEN
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String    @id @default(uuid())
+  nik                String    @unique
+  name               String
+  email              String    @unique
+  password           String
+  hashedRefreshToken String?   
+  role               Role      @default(PASIEN)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
