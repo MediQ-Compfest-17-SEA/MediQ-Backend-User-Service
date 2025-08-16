@@ -14,6 +14,10 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
+  /**
+   * Memvalidasi pengguna berdasarkan email dan password.
+   * Menggunakan bcrypt untuk membandingkan password yang di-hash.
+   */
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.userService.findByEmail(email);
     if (user && (await bcrypt.compare(pass, user.password))) {
@@ -23,6 +27,10 @@ export class AuthService {
     return null;
   }
 
+  /**
+   * Menghasilkan token akses dan refresh token untuk pengguna yang berhasil login.
+   * Token akses memiliki masa berlaku pendek, sedangkan refresh token lebih lama.
+   */
   async login(user: any) {
     const accessTokenPayload = { email: user.email, sub: user.id, role: user.role };
     const accessToken = this.jwtService.sign(accessTokenPayload); 
@@ -38,6 +46,10 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  /**
+   * Menghapus refresh token dari pengguna saat logout.
+   * Ini akan mencegah penggunaan refresh token yang sudah tidak valid.
+   */
   async logout(userId: string) {
     return this.prisma.user.update({
       where: { id: userId },
@@ -45,6 +57,10 @@ export class AuthService {
     });
   }
 
+  /**
+   * Memperbarui token akses menggunakan refresh token.
+   * Memastikan refresh token yang diberikan cocok dengan yang tersimpan di database.
+   */
   async refreshTokens(userId: string, refreshToken: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.hashedRefreshToken) {
@@ -65,6 +81,10 @@ export class AuthService {
     return { accessToken };
   }
   
+  /**
+   * Mengupdate hash refresh token pengguna di database.
+   * Digunakan saat pengguna login untuk menyimpan refresh token yang baru.
+   */
   private async updateRefreshTokenHash(userId: string, refreshToken: string) {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     await this.prisma.user.update({

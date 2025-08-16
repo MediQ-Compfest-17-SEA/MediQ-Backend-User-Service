@@ -9,6 +9,10 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  /**
+   * Endpoint untuk login pengguna.
+   * Menerima email dan password, memvalidasi pengguna, dan mengembalikan access token dan refresh token.
+   */
   @Post('login')
   @ApiOperation({ summary: 'Login pengguna' })
   @ApiResponse({ status: 200, description: 'Login berhasil, mengembalikan access dan refresh token.'})
@@ -24,6 +28,10 @@ export class AuthController {
     return this.authService.login(user);
   }
 
+  /**
+   * Endpoint untuk memperbarui access token menggunakan refresh token.
+   * Hanya pengguna yang sudah login yang dapat mengakses endpoint ini.
+   */
   @UseGuards(AuthGuard('jwt-refresh'))
   @Get('refresh')
   @ApiOperation({ summary: 'Memperbarui access token' })

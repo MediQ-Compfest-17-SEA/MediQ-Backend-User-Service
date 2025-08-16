@@ -8,6 +8,10 @@ import { Role } from '@prisma/client';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Membuat pengguna baru dengan validasi email dan NIK.
+   * Menggunakan bcrypt untuk meng-hash password sebelum disimpan.
+   */
   async create(createUserDto: CreateUserDto) {
     const { email, nik, password, name } = createUserDto;
 
@@ -42,6 +46,10 @@ export class UserService {
     return newUser;
   }
 
+  /**
+   * Mengecek apakah NIK sudah terdaftar.
+   * Mengembalikan true jika NIK sudah ada, false jika tidak.
+   */
   async isNikRegistered(nik: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { nik },
@@ -50,6 +58,10 @@ export class UserService {
     return !!user;
   } 
 
+  /**
+   * Mencari pengguna berdasarkan NIK.
+   * Mengembalikan pengguna jika ditemukan, atau melempar NotFoundException jika tidak ada.
+   */
   async findByNik(nik: string) {
     const user = await this.prisma.user.findUnique({
       where: { nik },
@@ -65,10 +77,18 @@ export class UserService {
     return user;
   }
 
+  /**
+   * Mencari pengguna berdasarkan email.
+   * Mengembalikan pengguna jika ditemukan, atau null jika tidak ada.
+   */
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email }});
   }
 
+  /**
+   * Mengambil semua pengguna.
+   * Mengembalikan daftar pengguna dengan informasi dasar.
+   */
   async findAll() {
     return this.prisma.user.findMany({
       select: {
@@ -81,6 +101,10 @@ export class UserService {
     });
   }
 
+  /**
+   * Mengubah peran pengguna berdasarkan ID.
+   * Mengembalikan pengguna yang telah diperbarui.
+   */
   async updateRole(userId: string, role: Role) {
     try {
       const updatedUser = await this.prisma.user.update({
@@ -99,6 +123,10 @@ export class UserService {
     }
   }
 
+  /**
+   * Menghapus pengguna berdasarkan ID.
+   * Mengembalikan pesan sukses jika berhasil, atau melempar NotFoundException jika tidak ditemukan.
+   */
   async delete(userId: string) {
     try {
       await this.prisma.user.delete({
@@ -108,5 +136,29 @@ export class UserService {
     } catch (error) {
       throw new NotFoundException(`User with ID ${userId} not found.`);
     }
+  }
+
+    /**
+   * Mengambil profil pengguna berdasarkan ID.
+   */
+  async getUserProfile(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        nik: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found.`);
+    }
+
+    return user;
   }
 }

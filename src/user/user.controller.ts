@@ -1,43 +1,63 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Request, Patch, Delete, HttpCode, NotFoundException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Patch, Delete, HttpCode, HttpStatus, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UserService } from './user.service';
 import { AuthGuard } from '@nestjs/passport';
+import { Role } from '@prisma/client';
+
+import { UserService } from './user.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateRoleDto } from 'src/auth/dto/update-role.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
-import { Role } from '@prisma/client';
-import { UpdateRoleDto } from 'src/auth/dto/update-role.dto';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
-@ApiTags('user')
-@Controller('user')
+@ApiTags('users')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  /**
+   * Endpoint untuk mendaftarkan pengguna baru.
+   * Menerima data pengguna baru, melakukan validasi, dan menyimpan ke database.
+   */
   @Post()
   @ApiOperation({ summary: 'Mendaftarkan pengguna baru' })
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
 
+  /**
+   * Endpoint untuk mengecek apakah NIK sudah terdaftar.
+   * Mengembalikan 204 No Content jika NIK sudah ada, atau 404 Not Found jika belum terdaftar.
+   */
   @Get('check-nik/:nik')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Mengecek NIK yang sudah terdaftar' })  
+  @ApiOperation({ summary: 'Mengecek NIK (efisien)' })
+  @ApiResponse({ status: 204, description: 'NIK sudah terdaftar.' })
+  @ApiResponse({ status: 404, description: 'NIK belum terdaftar.' })
   async checkNik(@Param('nik') nik: string) {
     const isRegistered = await this.userService.isNikRegistered(nik);
     if (!isRegistered) {
-      throw new NotFoundException ('User dengan NIK tersebut tidak ditemukan');
+      throw new NotFoundException(`User dengan NIK tersebut tidak ditemukan`);
     }
-    return;
+    return; // Otomatis mengembalikan 204 No Content
   }
 
+  /**
+   * Endpoint untuk mendapatkan profil pengguna yang sedang login.
+   * Menggunakan decorator @CurrentUser untuk mendapatkan data pengguna dari token JWT.
+   */
+  @Get('profile')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
-  @Get('profile')
   @ApiOperation({ summary: 'Mendapatkan profil pengguna yang sedang login' })
-  getProfile(@Request() req) {
-    return req.user;
+  getProfile(@CurrentUser() user: any) {
+    return user;
   }
 
+  /**
+   * Endpoint untuk mendapatkan semua pengguna (hanya untuk admin).
+   * Menggunakan guard RolesGuard untuk memastikan hanya admin yang dapat mengakses.
+   */
   @Get()
   @Roles(Role.ADMIN_FASKES)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -47,6 +67,10 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  /**
+   * Endpoint untuk mendapatkan pengguna berdasarkan ID (hanya untuk admin).
+   * Menggunakan guard RolesGuard untuk memastikan hanya admin yang dapat mengakses.
+   */
   @Patch(':id/role')
   @Roles(Role.ADMIN_FASKES)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -56,6 +80,10 @@ export class UserController {
     return this.userService.updateRole(id, updateRoleDto.role);
   }
   
+  /**
+   * Endpoint untuk menghapus pengguna berdasarkan ID (hanya untuk admin).
+   * Menggunakan guard RolesGuard untuk memastikan hanya admin yang dapat mengakses.
+   */
   @Delete(':id')
   @Roles(Role.ADMIN_FASKES)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
