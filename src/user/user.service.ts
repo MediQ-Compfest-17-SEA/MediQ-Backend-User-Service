@@ -42,6 +42,14 @@ export class UserService {
     return newUser;
   }
 
+  async isNikRegistered(nik: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { nik },
+      select: { id: true },
+    });
+    return !!user;
+  } 
+
   async findByNik(nik: string) {
     const user = await this.prisma.user.findUnique({
       where: { nik },
