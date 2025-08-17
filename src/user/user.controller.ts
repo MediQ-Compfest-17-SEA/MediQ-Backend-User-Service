@@ -9,6 +9,7 @@ import { UpdateRoleDto } from 'src/auth/dto/update-role.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { EventPattern, Payload } from '@nestjs/microservices';
 
 @ApiTags('users')
 @Controller('users')
@@ -25,6 +26,18 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
+  /**
+   * Event handler untuk membuat pengguna baru dari data OCR.
+   * Menerima data NIK dan nama dari antrian pesan.
+   */
+  @EventPattern('user_register_ocr')
+  async handleUserRegisterFromOcr(@Payload() data: { nik: string; name: string }) {
+    try {
+      await this.userService.createFromOcr(data);
+    } catch (error) {
+      console.error('Failed to create user from OCR:', error);
+    }
+  }
   /**
    * Endpoint untuk mengecek apakah NIK sudah terdaftar.
    * Mengembalikan 204 No Content jika NIK sudah ada, atau 404 Not Found jika belum terdaftar.

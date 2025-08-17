@@ -44,6 +44,35 @@ export class UserService {
   }
 
   /**
+   * Membuat pengguna baru dari data OCR. (ini bisa dipindahin di ocr services mungkin)
+   * Jika pengguna dengan NIK yang sama sudah ada, kembalikan pengguna tersebut.
+   * Jika tidak, buat pengguna baru dengan password acak dan email placeholder.
+   */
+  async createFromOcr(data: { nik: string; name: string }) {
+    const { nik, name } = data;
+
+    const existingUser = await this.prisma.user.findFirst({
+      where: { nik },
+    });
+
+    if (existingUser) return existingUser;
+    
+    const randomPassword = Math.random().toString(36).slice(-12);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    const newUser = await this.prisma.user.create({
+      data: {
+        nik,
+        name,
+        email: `${nik}@mediq.placeholder.email`, // bisa disesuain lagi nanti
+        password: hashedPassword,
+      },
+    });
+    const { password, ...result } = newUser;
+    return result;
+  }
+
+  /**
    * Mengecek apakah NIK sudah terdaftar.
    * Mengembalikan true jika NIK sudah ada, false jika tidak.
    */
