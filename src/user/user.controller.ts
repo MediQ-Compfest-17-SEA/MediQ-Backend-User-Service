@@ -31,7 +31,7 @@ export class UserController {
    */
   @Get('check-nik/:nik')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Mengecek NIK (efisien)' })
+  @ApiOperation({ summary: 'Mengecek NIK (hanya mengembalikan boolean)' })
   @ApiResponse({ status: 204, description: 'NIK sudah terdaftar.' })
   @ApiResponse({ status: 404, description: 'NIK belum terdaftar.' })
   async checkNik(@Param('nik') nik: string) {
@@ -39,7 +39,7 @@ export class UserController {
     if (!isRegistered) {
       throw new NotFoundException(`User dengan NIK tersebut tidak ditemukan`);
     }
-    return; // Otomatis mengembalikan 204 No Content
+    return;
   }
 
   /**

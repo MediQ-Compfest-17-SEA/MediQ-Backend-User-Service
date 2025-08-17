@@ -19,12 +19,9 @@ export class UserService {
       where: { OR: [{ email }, { nik }] },
     });
 
-    if (existingUser) {
-      throw new ConflictException('Email or NIK is already registered');
-    }
+    if (existingUser) throw new ConflictException('Email or NIK is already registered');
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = await this.prisma.user.create({
       data: {
         name,
@@ -70,11 +67,25 @@ export class UserService {
         nik: true,
       },
     });
-
     if (!user) {
       throw new NotFoundException(`User with NIK ${nik} not found.`);
     }
     return user;
+  }
+
+  /**
+   * Mencari pengguna berdasarkan NIK dan nama.
+   * Mengembalikan pengguna jika ditemukan, atau null jika tidak ada.
+   */
+  async findByNikAndName(nik: string, name: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { nik },
+    });
+
+    if (user && user.name.toLowerCase() === name.toLowerCase()) {
+      return user;
+    }
+    return null;
   }
 
   /**

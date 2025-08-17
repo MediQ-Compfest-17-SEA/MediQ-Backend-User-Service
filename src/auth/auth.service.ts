@@ -4,6 +4,7 @@ import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -28,12 +29,40 @@ export class AuthService {
   }
 
   /**
+   * Memvalidasi admin berdasarkan email dan password.
+   * Hanya admin yang dapat login menggunakan endpoint ini.
+   */
+  async validateAdmin(email: string, pass: string): Promise<any> {
+    const user = await this.userService.findByEmail(email);
+    if (user && (await bcrypt.compare(pass, user.password)) && user.role !== Role.PASIEN) {
+      const { password, ...result } = user;
+      return result;
+    }
+    return null;
+  }
+
+  /**
+   * Memvalidasi pengguna berdasarkan NIK dan nama.
+   * Digunakan untuk login pengguna dengan NIK.
+   */
+  async loginUser(nik: string, name: string): Promise<any> {
+    const user = await this.userService.findByNikAndName(nik, name);
+    if (!user) {
+      throw new UnauthorizedException('Pengguna dengan NIK dan Nama tersebut tidak ditemukan.');
+    }
+    return this.login(user);
+  }
+
+  /**
    * Menghasilkan token akses dan refresh token untuk pengguna yang berhasil login.
    * Token akses memiliki masa berlaku pendek, sedangkan refresh token lebih lama.
    */
   async login(user: any) {
     const accessTokenPayload = { email: user.email, sub: user.id, role: user.role };
-    const accessToken = this.jwtService.sign(accessTokenPayload); 
+    const accessToken = this.jwtService.sign(accessTokenPayload, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
+    }); 
     
     const refreshTokenPayload = { sub: user.id };
     const refreshToken = this.jwtService.sign(refreshTokenPayload, {
@@ -42,7 +71,6 @@ export class AuthService {
     });
 
     await this.updateRefreshTokenHash(user.id, refreshToken);
-
     return { accessToken, refreshToken };
   }
 
@@ -77,7 +105,6 @@ export class AuthService {
 
     const accessTokenPayload = { email: user.email, sub: user.id, role: user.role };
     const accessToken = this.jwtService.sign(accessTokenPayload);
-
     return { accessToken };
   }
   

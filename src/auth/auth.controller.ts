@@ -1,6 +1,7 @@
 import { Controller, Post, Body, UnauthorizedException, UseGuards, Request, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
+import { AdminLoginDto } from './dto/admin-login.dto';
+import { UserLoginDto } from './dto/user-login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -10,22 +11,33 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   /**
-   * Endpoint untuk login pengguna.
-   * Menerima email dan password, memvalidasi pengguna, dan mengembalikan access token dan refresh token.
+   * Endpoint untuk login Admin dengan email dan password.
    */
-  @Post('login')
-  @ApiOperation({ summary: 'Login pengguna' })
+  @Post('login/admin')
+  @ApiOperation({ summary: 'Login untuk Admin/Operator' })
   @ApiResponse({ status: 200, description: 'Login berhasil, mengembalikan access dan refresh token.'})
   @ApiResponse({ status: 401, description: 'Kredensial tidak valid.'})
-  async login(@Body() loginDto: LoginDto) {
-    const user = await this.authService.validateUser(
-      loginDto.email,
-      loginDto.password,
+  async login(@Body() AdminLoginDto: AdminLoginDto) {
+    const user = await this.authService.validateAdmin(
+      AdminLoginDto.email,
+      AdminLoginDto.password,
     );
     if (!user) {
       throw new UnauthorizedException('Kredensial tidak valid.');
     }
     return this.authService.login(user);
+  }
+
+  /**
+   * Endpoint untuk login pengguna dengan NIK dan nama.
+   * Menerima NIK dan nama, memvalidasi pengguna, dan mengembalikan access token dan refresh token.
+   */
+  @Post('login/user')
+  @ApiOperation({ summary: 'Login untuk User/Pasien via NIK & Nama' })
+  @ApiResponse({ status: 200, description: 'Login berhasil, mengembalikan access dan refresh token.'})
+  @ApiResponse({ status: 401, description: 'Pengguna dengan NIK dan Nama tersebut tidak ditemukan.'})
+  async loginUser(@Body() userLoginDto: UserLoginDto) {
+    return this.authService.loginUser(userLoginDto.nik, userLoginDto.name);
   }
 
   /**
