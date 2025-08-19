@@ -9,7 +9,7 @@ import { UpdateRoleDto } from 'src/auth/dto/update-role.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 
 @ApiTags('users')
 @Controller('users')
@@ -21,6 +21,7 @@ export class UserController {
    * Menerima data pengguna baru, melakukan validasi, dan menyimpan ke database.
    */
   @Post()
+  @MessagePattern('user.create')
   @ApiOperation({ summary: 'Mendaftarkan pengguna baru' })
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
@@ -43,6 +44,7 @@ export class UserController {
    * Mengembalikan 204 No Content jika NIK sudah ada, atau 404 Not Found jika belum terdaftar.
    */
   @Get('check-nik/:nik')
+  @MessagePattern('user.check-nik')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Mengecek NIK (hanya mengembalikan boolean)' })
   @ApiResponse({ status: 204, description: 'NIK sudah terdaftar.' })
@@ -60,6 +62,7 @@ export class UserController {
    * Menggunakan decorator @CurrentUser untuk mendapatkan data pengguna dari token JWT.
    */
   @Get('profile')
+  @MessagePattern('user.profile')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mendapatkan profil pengguna yang sedang login' })
@@ -72,6 +75,7 @@ export class UserController {
    * Menggunakan guard RolesGuard untuk memastikan hanya admin yang dapat mengakses.
    */
   @Get()
+  @MessagePattern('user.findAll')
   @Roles(Role.ADMIN_FASKES)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
@@ -85,6 +89,7 @@ export class UserController {
    * Menggunakan guard RolesGuard untuk memastikan hanya admin yang dapat mengakses.
    */
   @Patch(':id/role')
+  @MessagePattern('user.updateRole')
   @Roles(Role.ADMIN_FASKES)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
@@ -98,6 +103,7 @@ export class UserController {
    * Menggunakan guard RolesGuard untuk memastikan hanya admin yang dapat mengakses.
    */
   @Delete(':id')
+  @MessagePattern('user.delete')
   @Roles(Role.ADMIN_FASKES)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()

@@ -1,4 +1,5 @@
 import { Controller, Post, Body, UnauthorizedException, UseGuards, Request, Get } from '@nestjs/common';
+import { MessagePattern } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { UserLoginDto } from './dto/user-login.dto';
@@ -14,6 +15,7 @@ export class AuthController {
    * Endpoint untuk login Admin dengan email dan password.
    */
   @Post('login/admin')
+  @MessagePattern('auth.login.admin')
   @ApiOperation({ summary: 'Login untuk Admin/Operator' })
   @ApiResponse({ status: 200, description: 'Login berhasil, mengembalikan access dan refresh token.'})
   @ApiResponse({ status: 401, description: 'Kredensial tidak valid.'})
@@ -33,6 +35,7 @@ export class AuthController {
    * Menerima NIK dan nama, memvalidasi pengguna, dan mengembalikan access token dan refresh token.
    */
   @Post('login/user')
+  @MessagePattern('auth.login.user')
   @ApiOperation({ summary: 'Login untuk User/Pasien via NIK & Nama' })
   @ApiResponse({ status: 200, description: 'Login berhasil, mengembalikan access dan refresh token.'})
   @ApiResponse({ status: 401, description: 'Pengguna dengan NIK dan Nama tersebut tidak ditemukan.'})
@@ -46,6 +49,7 @@ export class AuthController {
    */
   @UseGuards(AuthGuard('jwt-refresh'))
   @Get('refresh')
+  @MessagePattern('auth.refresh')
   @ApiOperation({ summary: 'Memperbarui access token' })
   refreshTokens(@Request() req) {
     const userId = req.user.sub;
@@ -57,6 +61,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout pengguna' })
   @Get('logout')
+  @MessagePattern('auth.logout')
   logout(@Request() req) {
     return this.authService.logout(req.user.id);
   }
