@@ -37,12 +37,14 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document);
+  SwaggerModule.setup('api/docs', app, document);
 
   await app.startAllMicroservices();
-  await app.listen(configService.get<number>('PORT') ?? 3000)
+  const port = configService.get<number>('PORT') ?? 3000;
+  await app.listen(port);
 
-  console.log(`User service is listening on port ${configService.get('PORT')}`);
+  console.log(`User service is listening on port ${port}`);
+  console.log(`Swagger documentation available at: http://localhost:${port}/api/docs`);
   console.log(`Microservice is listening for RabbitMQ messages`);
 }
 bootstrap();

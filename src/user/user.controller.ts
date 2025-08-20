@@ -58,6 +58,23 @@ export class UserController {
   }
 
   /**
+   * Message pattern untuk mengecek keberadaan NIK (untuk OCR Service).
+   */
+  @MessagePattern('user.check-nik-exists')
+  async checkNikExists(@Payload() data: { nik: string }) {
+    return this.userService.isNikRegistered(data.nik);
+  }
+
+  /**
+   * Message pattern untuk mendapatkan user berdasarkan NIK (untuk OCR Service).
+   */
+  @MessagePattern('user.get-by-nik')
+  async getUserByNik(@Payload() data: { nik: string }) {
+    const user = await this.userService.findByNik(data.nik);
+    return user;
+  }
+
+  /**
    * Endpoint untuk mendapatkan profil pengguna yang sedang login.
    * Menggunakan decorator @CurrentUser untuk mendapatkan data pengguna dari token JWT.
    */
