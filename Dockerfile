@@ -1,31 +1,44 @@
-# ---- Stage 1: Build ----
+# User Service Dockerfile
 FROM node:18-alpine AS builder
+
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
-RUN npm install
+COPY tsconfig*.json ./
 
-COPY . .
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
 
-COPY prisma ./prisma
+# Copy source code
+COPY src/ src/
+COPY prisma/ prisma/
+
+# Generate Prisma client and build
 RUN npx prisma generate
-
 RUN npm run build
 
-# ---- Stage 2: Production ----
-FROM node:18-alpine
+# Production stage
+FROM node:18-alpine AS production
+
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install --omit=dev
-
-# Salin hasil build dari stage 'builder'
+# Copy built application and dependencies
 COPY --from=builder /app/dist ./dist
-
-# Salin skema dan client prisma yang sudah digenerate
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-EXPOSE 3000
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
-CMD ["node", "dist/main"]
+USER nodejs
+
+EXPOSE 8602
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node dist/health-check.js
+
+CMD ["node", "dist/main.js"]

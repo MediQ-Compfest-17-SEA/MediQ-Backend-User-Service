@@ -40,7 +40,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   await app.startAllMicroservices();
-  const port = configService.get<number>('PORT') ?? 3000;
+  const port = configService.get<number>('PORT') ?? 8602;
   await app.listen(port);
 
   console.log(`User service is listening on port ${port}`);
