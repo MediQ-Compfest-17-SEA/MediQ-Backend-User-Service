@@ -29,11 +29,23 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('MediQ User Service')
-    .setDescription('API documentation for the MediQ User Service')
-    .setVersion('1.0')
-    .addTag('users', 'Operations related to users')
-    .addTag('auth', 'Authentication and authorization operations')
+    .setDescription('Mikroservice untuk manajemen pengguna dengan dukungan data KTP lengkap dari OCR')
+    .setVersion('2.0')
+    .addTag('users', 'Operasi manajemen pengguna dengan data KTP lengkap')
+    .addTag('auth', 'Autentikasi dan otorisasi dengan JWT tokens')
+    .addTag('health', 'Health check dan monitoring service')
     .addBearerAuth()
+    .setContact(
+      'MediQ Support',
+      'https://mediq.craftthingy.com',
+      'support@mediq.com'
+    )
+    .setLicense(
+      'MIT',
+      'https://opensource.org/licenses/MIT'
+    )
+    .addServer('http://localhost:8602', 'Development Server')
+    .addServer('https://mediq-user-service.craftthingy.com', 'Production Server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

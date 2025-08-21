@@ -21,7 +21,7 @@ export class AuthService {
    */
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.userService.findByEmail(email);
-    if (user && (await bcrypt.compare(pass, user.password))) {
+    if (user && user.password && (await bcrypt.compare(pass, user.password))) {
       const { password, ...result } = user;
       return result;
     }
@@ -34,7 +34,7 @@ export class AuthService {
    */
   async validateAdmin(email: string, pass: string): Promise<any> {
     const user = await this.userService.findByEmail(email);
-    if (user && (await bcrypt.compare(pass, user.password)) && user.role !== Role.PASIEN) {
+    if (user && user.password && (await bcrypt.compare(pass, user.password)) && user.role !== Role.PASIEN) {
       const { password, ...result } = user;
       return result;
     }

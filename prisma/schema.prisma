@@ -22,10 +22,23 @@ model User {
   id                 String    @id @default(uuid())
   nik                String    @unique
   name               String
-  email              String    @unique
-  password           String
+  email              String?   @unique
+  password           String?
   hashedRefreshToken String?   
   role               Role      @default(PASIEN)
+  // KTP Data Fields
+  tempat_lahir       String?
+  tgl_lahir          String?
+  jenis_kelamin      String?
+  alamat_jalan       String?
+  alamat_kel_desa    String?
+  alamat_kecamatan   String?
+  alamat_rt_rw       String?
+  agama              String?
+  status_perkawinan  String?
+  pekerjaan          String?
+  kewarganegaraan    String?
+  berlaku_hingga     String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 }

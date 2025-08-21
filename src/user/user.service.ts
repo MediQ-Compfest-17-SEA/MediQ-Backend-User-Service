@@ -13,21 +13,22 @@ export class UserService {
    * Menggunakan bcrypt untuk meng-hash password sebelum disimpan.
    */
   async create(createUserDto: CreateUserDto) {
-    const { email, nik, password, name } = createUserDto;
+    const { email, nik, password, name, ...ktpData } = createUserDto;
 
     const existingUser = await this.prisma.user.findFirst({
-      where: { OR: [{ email }, { nik }] },
+      where: { OR: [{ email: email || undefined }, { nik }] },
     });
 
     if (existingUser) throw new ConflictException('Email or NIK is already registered');
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
     const newUser = await this.prisma.user.create({
       data: {
         name,
         email,
         nik,
         password: hashedPassword,
+        ...ktpData,
       },
       select: {
         id: true,

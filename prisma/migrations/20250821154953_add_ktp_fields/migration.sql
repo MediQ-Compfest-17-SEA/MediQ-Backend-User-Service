@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE `User` ADD COLUMN `agama` VARCHAR(191) NULL,
+    ADD COLUMN `alamat_jalan` VARCHAR(191) NULL,
+    ADD COLUMN `alamat_kecamatan` VARCHAR(191) NULL,
+    ADD COLUMN `alamat_kel_desa` VARCHAR(191) NULL,
+    ADD COLUMN `alamat_rt_rw` VARCHAR(191) NULL,
+    ADD COLUMN `berlaku_hingga` VARCHAR(191) NULL,
+    ADD COLUMN `jenis_kelamin` VARCHAR(191) NULL,
+    ADD COLUMN `kewarganegaraan` VARCHAR(191) NULL,
+    ADD COLUMN `pekerjaan` VARCHAR(191) NULL,
+    ADD COLUMN `status_perkawinan` VARCHAR(191) NULL,
+    ADD COLUMN `tempat_lahir` VARCHAR(191) NULL,
+    ADD COLUMN `tgl_lahir` VARCHAR(191) NULL,
+    MODIFY `email` VARCHAR(191) NULL,
+    MODIFY `password` VARCHAR(191) NULL;
