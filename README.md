@@ -1,98 +1,407 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# MediQ Backend - User Service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 👤 Deskripsi
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+**User Service** adalah layanan inti dalam sistem MediQ yang mengelola **manajemen pengguna dan autentikasi** untuk seluruh platform. Service ini menyediakan sistem autentikasi yang aman dengan JWT tokens, role-based access control, dan integrasi seamless dengan semua microservices lainnya.
 
-## Description
+## ✨ Fitur Utama
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 🔐 Sistem Autentikasi Lengkap
+- **Dual Login System**: Login admin (email/password) dan login pasien (NIK/nama)
+- **JWT Token Management**: Access tokens (15 menit) + refresh tokens (7 hari)
+- **Password Security**: BCrypt hashing dengan salt rounds optimal
+- **Session Management**: Secure session handling dengan refresh token rotation
 
-## Project setup
+### 👥 Manajemen Pengguna
+- **Role-Based Access Control**: PASIEN, OPERATOR, ADMIN_FASKES
+- **User Registration**: Pendaftaran pengguna baru dengan validasi email dan NIK
+- **Profile Management**: Update profil dan role management
+- **NIK Validation**: Validasi NIK Indonesia dengan format checking
 
-```bash
-$ npm install
-```
+### 🔄 Microservices Integration
+- **RabbitMQ Patterns**: Komunikasi dengan OCR Service untuk auto-registration
+- **Database Independence**: MySQL database terpisah untuk user data
+- **Event-Driven**: Message patterns untuk cross-service communication
 
-## Compile and run the project
+## 🚀 Quick Start
 
-```bash
-# development
-$ npm run start
+### Persyaratan
+- **Node.js** 18+
+- **MySQL** 8.0+
+- **RabbitMQ** 3.9+
+- **Redis** (optional, untuk session caching)
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
+### Instalasi
 
 ```bash
-# unit tests
-$ npm run test
+# Clone repository
+git clone https://github.com/MediQ-Compfest-17-SEA/MediQ-Backend-User-Service.git
+cd MediQ-Backend-User-Service
 
-# e2e tests
-$ npm run test:e2e
+# Install dependencies
+npm install
 
-# test coverage
-$ npm run test:cov
+# Setup database
+npx prisma migrate dev
+npx prisma generate
+
+# Setup environment variables
+cp .env.example .env
+# Edit .env sesuai konfigurasi environment Anda
+
+# Start development server
+npm run start:dev
 ```
 
-## Deployment
+### Environment Variables
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+```env
+# Server Configuration
+PORT=8602
+NODE_ENV=development
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+# Database Configuration
+DATABASE_URL="mysql://username:password@localhost:3306/mediq_users"
 
+# JWT Configuration  
+JWT_SECRET=your-very-secure-jwt-secret-256-bits-minimum
+JWT_REFRESH_SECRET=your-very-secure-refresh-secret-256-bits-minimum
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# RabbitMQ Configuration
+RABBITMQ_URL=amqp://localhost:5672
+
+# Security
+BCRYPT_SALT_ROUNDS=12
+PASSWORD_MIN_LENGTH=6
+
+# Logging
+LOG_LEVEL=info
+```
+
+## 📋 API Endpoints
+
+### Base URL
+**Development**: `http://localhost:8602`  
+**Production**: `https://api.mediq.com/users`
+
+### Swagger Documentation
+**Interactive API Docs**: `http://localhost:8602/api/docs`
+
+### Authentication Endpoints
+
+#### 🔑 Login & Authentication
+
+**Login Admin/Operator**
+```http
+POST /auth/login/admin
+Content-Type: application/json
+
+{
+  "email": "admin@mediq.com",
+  "password": "admin123"
+}
+```
+
+**Response:**
+```json
+{
+  "user": {
+    "id": "uuid-string",
+    "name": "Admin User",
+    "email": "admin@mediq.com", 
+    "role": "ADMIN_FASKES"
+  },
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Login Pasien (NIK + Nama)**
+```http
+POST /auth/login/user  
+Content-Type: application/json
+
+{
+  "nik": "3171012345678901",
+  "name": "John Doe"
+}
+```
+
+**Refresh Token**
+```http
+GET /auth/refresh
+Authorization: Bearer [refresh-token]
+```
+
+**Logout**
+```http
+GET /auth/logout
+Authorization: Bearer [access-token]
+```
+
+#### 👤 User Management
+
+**Register User Baru**
+```http
+POST /users
+Content-Type: application/json
+
+{
+  "nik": "3171012345678901",
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+```
+
+**Check NIK Registration**
+```http
+GET /users/check-nik/3171012345678901
+```
+
+**Get User Profile**
+```http
+GET /users/profile
+Authorization: Bearer [access-token]
+```
+
+**Get All Users (Admin Only)**
+```http
+GET /users
+Authorization: Bearer [admin-access-token]
+```
+
+**Update User Role (Admin Only)**
+```http
+PATCH /users/{userId}/role
+Authorization: Bearer [admin-access-token]
+Content-Type: application/json
+
+{
+  "role": "OPERATOR"
+}
+```
+
+## 🧪 Testing
+
+### Unit Testing
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Run all tests with coverage
+npm run test:cov
+
+# Run tests in watch mode
+npm run test:watch
+
+# Test specific service
+npm run test user.service.spec.ts
+npm run test auth.service.spec.ts
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Integration Testing
+```bash
+# Test database operations
+npm run test:integration
 
-## Resources
+# Test RabbitMQ communication  
+npm run test:messaging
 
-Check out a few resources that may come in handy when working with NestJS:
+# Test authentication flows
+npm run test:auth-flow
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Security Testing
+```bash
+# Test JWT validation
+npm run test:jwt
 
-## Support
+# Test role-based access
+npm run test:rbac
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Test password security
+npm run test:password-security
+```
 
-## Stay in touch
+## 🏗️ Database Schema
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### User Model
+```sql
+model User {
+  id                 String    @id @default(uuid())
+  nik                String    @unique           // Nomor Induk Kependudukan
+  name               String                      // Nama lengkap
+  email              String    @unique           // Email unik
+  password           String                      // BCrypt hashed password
+  hashedRefreshToken String?                     // Refresh token (hashed)
+  role               Role      @default(PASIEN)  // User role
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
 
-## License
+enum Role {
+  PASIEN        // Regular patient
+  OPERATOR      // Healthcare operator  
+  ADMIN_FASKES  // Healthcare facility admin
+}
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Database Operations
+```typescript
+// User creation dengan validation
+async create(createUserDto: CreateUserDto) {
+  // 1. Check existing email/NIK
+  const existingUser = await this.prisma.user.findFirst({
+    where: { OR: [{ email }, { nik }] },
+  });
+  
+  if (existingUser) {
+    throw new ConflictException('Email or NIK is already registered');
+  }
+
+  // 2. Hash password
+  const hashedPassword = await bcrypt.hash(password, 12);
+  
+  // 3. Create user
+  return this.prisma.user.create({
+    data: { name, email, nik, password: hashedPassword },
+    select: { id: true, nik: true, name: true, email: true, role: true }
+  });
+}
+```
+
+## 📦 Production Deployment
+
+### Docker
+```bash
+# Build production image
+docker build -t mediq/user-service:latest .
+
+# Run container
+docker run -p 8602:8602 \
+  -e DATABASE_URL="mysql://user:pass@mysql:3306/mediq_users" \
+  -e JWT_SECRET="your-production-jwt-secret" \
+  -e RABBITMQ_URL="amqp://rabbitmq:5672" \
+  mediq/user-service:latest
+```
+
+### Kubernetes
+```bash
+# Deploy dengan database migrations
+kubectl apply -f k8s/
+
+# Run database migrations
+kubectl exec -it user-service-pod -- npx prisma migrate deploy
+
+# Check service status
+kubectl get pods -l app=user-service
+
+# Monitor logs
+kubectl logs -f deployment/user-service
+```
+
+### Database Migrations
+```bash
+# Create new migration
+npx prisma migrate dev --name add-user-profile
+
+# Deploy to production
+npx prisma migrate deploy
+
+# Reset development database
+npx prisma migrate reset
+```
+
+## 🔧 Development
+
+### Authentication Flow
+```typescript
+// Complete authentication workflow
+export class AuthService {
+  async validateAdmin(email: string, password: string) {
+    const user = await this.userService.findByEmail(email);
+    
+    if (!user || user.role === Role.PASIEN) {
+      return null;
+    }
+    
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    return isPasswordValid ? user : null;
+  }
+
+  async login(user: User) {
+    const payload = { 
+      sub: user.id, 
+      email: user.email, 
+      role: user.role 
+    };
+    
+    const access_token = this.jwtService.sign(payload);
+    const refresh_token = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_REFRESH_SECRET'),
+      expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN'),
+    });
+
+    await this.updateRefreshToken(user.id, refresh_token);
+    
+    return { user, access_token, refresh_token };
+  }
+}
+```
+
+### Message Pattern Handlers
+```typescript
+// RabbitMQ message handlers
+@MessagePattern('user.create')
+async createUserFromMessage(@Payload() data: CreateUserDto) {
+  return this.userService.create(data);
+}
+
+@MessagePattern('user.check-nik-exists')
+async checkNikExists(@Payload() data: { nik: string }) {
+  return this.userService.isNikRegistered(data.nik);
+}
+
+@MessagePattern('user.get-by-nik')
+async getUserByNik(@Payload() data: { nik: string }) {
+  return this.userService.findByNik(data.nik);
+}
+```
+
+## 🚨 Security Considerations
+
+### Password Security
+- **BCrypt Hashing**: 12 salt rounds untuk optimal security
+- **Password Requirements**: Minimum 6 characters (configurable)
+- **Password Validation**: Strong password policies (optional)
+
+### JWT Security
+- **Secure Secrets**: 256-bit minimum secrets untuk production
+- **Token Expiration**: Short-lived access tokens (15 minutes)
+- **Refresh Token Rotation**: Automatic rotation untuk enhanced security
+- **Token Blacklisting**: Logout invalidates refresh tokens
+
+### Database Security
+- **Prepared Statements**: Prisma ORM prevents SQL injection
+- **Data Encryption**: Sensitive data encryption at rest
+- **Access Control**: Database user dengan minimal privileges
+- **Audit Logging**: Track semua user operations
+
+## 📄 License
+
+Copyright (c) 2024 MediQ Team. All rights reserved.
+
+---
+
+**💡 Tips Keamanan**:
+- Gunakan environment variables untuk semua secrets
+- Implement rate limiting untuk login endpoints
+- Monitor failed login attempts untuk brute force detection
+- Regular audit untuk user permissions dan access patterns
+- Backup database secara regular dengan encryption
+
+**🔗 Service Dependencies**:
+- **API Gateway**: Primary entry point untuk authentication
+- **OCR Service**: Auto-registration dari KTP data  
+- **Queue Service**: User information untuk queue management
+- **Institution Service**: User-institution association management
