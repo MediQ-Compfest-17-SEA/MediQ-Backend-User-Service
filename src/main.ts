@@ -29,11 +29,11 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('MediQ User Service')
-    .setDescription('Mikroservice untuk manajemen pengguna dengan dukungan data KTP lengkap dari OCR')
-    .setVersion('2.0')
-    .addTag('users', 'Operasi manajemen pengguna dengan data KTP lengkap')
-    .addTag('auth', 'Autentikasi dan otorisasi dengan JWT tokens')
-    .addTag('health', 'Health check dan monitoring service')
+    .setDescription('Advanced mikroservice untuk manajemen pengguna dengan dukungan data KTP lengkap dari OCR. Terintegrasi dengan Gemini AI OCR Engine untuk registrasi otomatis dan real-time notifications.')
+    .setVersion('3.0')
+    .addTag('users', 'User management dengan data KTP lengkap - Registrasi, profil, CRUD operations')
+    .addTag('auth', 'Authentication dan authorization dengan JWT tokens - Login, refresh, role management')
+    .addTag('health', 'Health check dan monitoring service - Status dan availability')
     .addBearerAuth()
     .setContact(
       'MediQ Support',
@@ -46,6 +46,7 @@ async function bootstrap() {
     )
     .addServer('http://localhost:8602', 'Development Server')
     .addServer('https://mediq-user-service.craftthingy.com', 'Production Server')
+    .setExternalDoc('MediQ Documentation', 'https://mediq.craftthingy.com/docs')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
