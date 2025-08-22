@@ -9,7 +9,7 @@ import { UpdateRoleDto } from 'src/auth/dto/update-role.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload, GrpcMethod } from '@nestjs/microservices';
 
 @ApiTags('users')
 @Controller('users')
@@ -127,5 +127,57 @@ export class UserController {
   @ApiOperation({ summary: 'Menghapus pengguna (Hanya Admin)' })
   delete(@Param('id') id: string) {
     return this.userService.delete(id);
+  }
+
+  /**
+   * Message pattern: Ambil data user lengkap berdasarkan ID (untuk Gateway).
+   */
+  @MessagePattern('user.get-by-id')
+  async getByIdMessage(@Payload() data: { id: string }) {
+    return this.userService.getUserProfile(data.id);
+  }
+
+  /**
+   * gRPC: user.v1.UserService/GetById
+   */
+  @GrpcMethod('UserService', 'GetById')
+  async getByIdGrpc(data: { id: string }) {
+    const u = await this.userService.getUserProfile(data.id);
+    // Map DateTime to ISO string to comply with proto (string fields)
+    return {
+      id: u.id,
+      email: u.email ?? '',
+      name: u.name ?? '',
+      nik: u.nik ?? '',
+      role: (u as any).role ?? '',
+      createdAt: (u as any).createdAt ? new Date((u as any).createdAt).toISOString() : '',
+      updatedAt: (u as any).updatedAt ? new Date((u as any).updatedAt).toISOString() : '',
+    };
+  }
+
+  /**
+   * HTTP: Ambil data user lengkap berdasarkan ID
+   */
+  @Get(':id')
+  @ApiOperation({ summary: 'Ambil data user lengkap berdasarkan ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User ditemukan',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', example: 'febc3c0c-e5c9-4977-a724-5c7e24f33fb9' },
+        email: { type: 'string', example: '6402131612700004@mediq.placeholder.email' },
+        name: { type: 'string', example: 'KASIRIN' },
+        nik: { type: 'string', example: '6402131612700004' },
+        role: { type: 'string', example: 'PASIEN' },
+        createdAt: { type: 'string', example: '2025-08-22T14:19:50.863Z' },
+        updatedAt: { type: 'string', example: '2025-08-22T14:19:50.863Z' }
+      }
+    }
+  })
+  @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
+  getByIdHttp(@Param('id') id: string) {
+    return this.userService.getUserProfile(id);
   }
 }

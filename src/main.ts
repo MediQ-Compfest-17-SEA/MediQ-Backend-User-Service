@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
+import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -13,16 +14,27 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
+  // Start gRPC microservice (internal communication)
   app.connectMicroservice({
-    transport: Transport.RMQ,
+    transport: Transport.GRPC,
     options: {
-      urls: [configService.get<string>('RABBITMQ_URL')],
-      queue: 'user_service_queue',
-      queueOptions: {
-        durable: false,
-      },
+      package: 'user.v1',
+      protoPath: join(__dirname, '../shared/proto/user.proto'),
+      url: process.env.USER_GRPC_URL || '0.0.0.0:51052',
     },
   });
+
+  // Enable CORS
+  app.enableCors();
+
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   app.useLogger(app.get(Logger));
   app.useGlobalPipes(new ValidationPipe());
