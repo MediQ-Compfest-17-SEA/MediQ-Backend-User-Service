@@ -4,16 +4,16 @@ import { UserService } from './user.service';
 
 describe('UserController', () => {
   let controller: UserController;
-  let service: UserService;
 
   const mockUserService = {
+    // UBAH MOCK INI UNTUK MENGEMBALIKAN PROMISE
     create: jest.fn(dto => {
-      return {
+      return Promise.resolve({
         id: 'some-uuid',
         ...dto,
-      };
+      });
     }),
-    findAll: jest.fn(() => ['user1', 'user2']),
+    findAll: jest.fn(() => Promise.resolve(['user1', 'user2'])),
   };
 
   beforeEach(async () => {
@@ -28,7 +28,6 @@ describe('UserController', () => {
     }).compile();
 
     controller = module.get<UserController>(UserController);
-    service = module.get<UserService>(UserService);
   });
 
   it('should be defined', () => {
@@ -37,10 +36,13 @@ describe('UserController', () => {
 
   it('should create a user', async () => {
     const dto = { name: 'Test User', email: 'test@example.com', password: 'password', nik: '12345' };
-    expect(await controller.create(dto)).toEqual({
+    
+    // Sekarang await expect akan bekerja
+    await expect(controller.create(dto)).resolves.toEqual({
       id: 'some-uuid',
       ...dto,
     });
+    
     expect(mockUserService.create).toHaveBeenCalledWith(dto);
   });
 });
