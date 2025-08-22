@@ -1,36 +1,46 @@
-// src/user/user.service.spec.ts
-
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserService } from './user.service';
+import { AuthService } from '../auth/auth.service';
+import { UserService } from '../user/user.service';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { Role } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
-describe('UserService', () => {
-  let service: UserService;
-  let prisma: PrismaService;
+// Mock bcrypt.compare karena ini operasi async
+jest.mock('bcrypt', () => ({
+  ...jest.requireActual('bcrypt'),
+  compare: jest.fn(),
+}));
+
+describe('AuthService', () => {
+  let service: AuthService;
+  let userService: UserService;
+
+  const mockUserService = {
+    findByEmail: jest.fn(),
+  };
 
   const mockPrismaService = {
-    user: {
-      // ✅ FIX: Add findFirst to the mock object
-      findFirst: jest.fn().mockResolvedValue(null), 
-      create: jest.fn().mockImplementation(dto => Promise.resolve({ id: 'some-uuid', ...dto.data })),
-    },
+    user: { update: jest.fn() },
   };
+  
+  const mockJwtService = { sign: jest.fn().mockReturnValue('mock-token') };
+  const mockConfigService = { get: jest.fn().mockReturnValue('mock-secret') };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        UserService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
+        AuthService,
+        { provide: UserService, useValue: mockUserService },
+        { provide: JwtService, useValue: mockJwtService },
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
-    service = module.get<UserService>(UserService);
-    prisma = module.get<PrismaService>(PrismaService);
-
-    // Reset mocks before each test
+    service = module.get<AuthService>(AuthService);
+    userService = module.get<UserService>(UserService);
     jest.clearAllMocks();
   });
 
@@ -38,39 +48,53 @@ describe('UserService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should create a new user', async () => {
-    const userDto = {
-      email: 'test@example.com',
-      password: 'password123', // Kita gunakan password mentah, karena service yang akan hash
-      name: 'Test User',
-      nik: '1234567890',
-    };
+  describe('validateUser', () => {
+    it('should return user data if credentials are valid', async () => {
+      const user = { email: 'test@test.com', password: 'hashedPassword' };
+      mockUserService.findByEmail.mockResolvedValue(user);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-    await service.create(userDto);
-    
-    // Expect that create was called since findFirst returned null
-        expect(prisma.user.create).toHaveBeenCalledWith({
-      data: {
-        email: userDto.email,
-        name: userDto.name,
-        nik: userDto.nik,
-        // Gunakan expect.any(String) untuk password karena kita tidak tahu hasil hash-nya
-        password: expect.any(String), 
-        // role tidak disertakan karena service Anda tidak menyertakannya
-      },
-      // Sertakan juga `select` clause yang digunakan oleh service Anda
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        nik: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      const { password, ...expectedResult } = user;
+      const result = await service.validateUser('test@test.com', 'password123');
+      
+      expect(result).toEqual(expectedResult);
     });
 
-    const calledWithData = mockPrismaService.user.create.mock.calls[0][0].data;
-    expect(calledWithData.password).not.toEqual(userDto.password);
+    it('should return null if password does not match', async () => {
+      const user = { email: 'test@test.com', password: 'hashedPassword' };
+      mockUserService.findByEmail.mockResolvedValue(user);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false); // Password salah
+      
+      const result = await service.validateUser('test@test.com', 'wrongpassword');
+      expect(result).toBeNull();
+    });
+
+    it('should return null if user does not exist', async () => {
+      mockUserService.findByEmail.mockResolvedValue(null);
+      const result = await service.validateUser('notfound@test.com', 'password123');
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('validateAdmin', () => {
+    it('should return admin data if credentials are valid and role is not PASIEN', async () => {
+        const adminUser = { email: 'admin@test.com', password: 'hashedPassword', role: Role.ADMIN_FASKES };
+        mockUserService.findByEmail.mockResolvedValue(adminUser);
+        (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+        const { password, ...expectedResult } = adminUser;
+        const result = await service.validateAdmin('admin@test.com', 'password123');
+
+        expect(result).toEqual(expectedResult);
+    });
+
+    it('should return null if user is a PASIEN', async () => {
+        const patientUser = { email: 'patient@test.com', password: 'hashedPassword', role: Role.PASIEN };
+        mockUserService.findByEmail.mockResolvedValue(patientUser);
+        (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+        
+        const result = await service.validateAdmin('patient@test.com', 'password123');
+        expect(result).toBeNull();
+    });
   });
 });

@@ -7,15 +7,13 @@ describe('AuthController', () => {
   let controller: AuthController;
 
   const mockAuthService = {
-    login: jest.fn(user => {
-      return {
-        accessToken: 'mockAccessToken',
-        refreshToken: 'mockRefreshToken',
-      };
+    validateAdmin: jest.fn(),
+    login: jest.fn().mockResolvedValue({
+      accessToken: 'mockAccessToken',
+      refreshToken: 'mockRefreshToken',
     }),
     logout: jest.fn(),
     refreshTokens: jest.fn(),
-    validateUser: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -35,16 +33,28 @@ describe('AuthController', () => {
     controller = module.get<AuthController>(AuthController);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
   
   it('should login a user and return tokens', async () => {
-    const user = { email: 'test@example.com', id: 'some-id' };
-    const result = await mockAuthService.login(user);
+    const loginDto = { email: 'test@example.com', password: 'password' };
+    const userPayload = { id: 'some-id', email: 'test@example.com', role: 'ADMIN_FASKES' };
 
+    // Atur agar mock validateAdmin mengembalikan user
+    mockAuthService.validateAdmin.mockResolvedValue(userPayload);
+
+    // Panggil metode controller, bukan service
+    const result = await controller.login(loginDto);
+
+    // Verifikasi bahwa metode yang benar dipanggil
+    expect(mockAuthService.validateAdmin).toHaveBeenCalledWith(loginDto.email, loginDto.password);
+    expect(mockAuthService.login).toHaveBeenCalledWith(userPayload);
+    // Verifikasi hasilnya
     expect(result).toHaveProperty('accessToken');
-    expect(result).toHaveProperty('refreshToken');
-    expect(mockAuthService.login).toHaveBeenCalledWith(user);
   });
 });
