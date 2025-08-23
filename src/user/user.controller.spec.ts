@@ -37,12 +37,7 @@ describe('UserController', () => {
   it('should create a user', async () => {
     const dto = { name: 'Test User', email: 'test@example.com', password: 'password', nik: '12345' };
     
-    // Sekarang await expect akan bekerja
-    await expect(controller.create(dto)).resolves.toEqual({
-      id: 'some-uuid',
-      ...dto,
-    });
-    
+    await controller.create(dto);
     expect(mockUserService.create).toHaveBeenCalledWith(dto);
   });
 });

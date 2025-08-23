@@ -24,8 +24,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       const adminName =
         this.configService.get<string>('ADMIN_NAME') || 'Administrator';
 
-      // If email not set (or explicitly disabled), skip
-      if (!adminEmail || !adminPassword) {
+      // Allow disabling admin seeding explicitly via env
+      const disableSeed =
+        this.configService.get<string>('DISABLE_ADMIN_SEED') === 'true';
+      if (disableSeed) {
+        console.log('[PrismaService] Admin seeding disabled via DISABLE_ADMIN_SEED=true');
         return;
       }
 
